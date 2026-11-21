@@ -49,6 +49,7 @@ client.on('interactionCreate', async interaction => {
   if (!interaction.isButton()) return;
 
   if (interaction.customId === 'create_ticket') {
+  await interaction.deferReply({ ephemeral: true });
     const guild = interaction.guild;
     const existing = guild.channels.cache.find(
       c => c.name === `ticket-${interaction.user.id}`
