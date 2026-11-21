@@ -26,5 +26,6 @@ client.on('guildMemberAdd', async member => {
   channel.send({ embeds: [embed] });
 });
 
+console.log("Token vorhanden:", !!process.env.DISCORD_TOKEN);
 client.login(process.env.DISCORD_TOKEN);
 
