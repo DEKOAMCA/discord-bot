@@ -77,7 +77,7 @@ client.once('ready', async () => {
 
     const embed = new EmbedBuilder()
       .setColor(COLOR)
-      .setTitle('🎫 AVENIX SERVICE – TICKET AUSWAHL')
+      .setTitle('🎫 AVENIX SERVICE – TICKET SYSTEM ')
 .setDescription(
   'Willkommen bei AVENIX Service!\n\n' +
   'Bitte wähle den passenden Ticket-Bereich:\n\n' +
