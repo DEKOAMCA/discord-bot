@@ -56,10 +56,9 @@ client.on('interactionCreate', async interaction => {
     );
 
     if (existing) {
-      return interaction.reply({
-        content: `Du hast bereits ein Ticket: ${existing}`,
-        ephemeral: true
-      });
+return interaction.editReply({
+  content: `Du hast bereits ein Ticket: ${existing}`
+});
     }
 
     const ticket = await guild.channels.create({
