@@ -78,10 +78,21 @@ client.once('ready', async () => {
     const embed = new EmbedBuilder()
       .setColor(COLOR)
       .setTitle('🎫 AVENIX SERVICE – TICKET AUSWAHL')
-      .setDescription(
-        'Willkommen bei AVENIX Service!\n\n' +
-        'Bitte wähle eine Kategorie aus, damit wir dir schnell helfen können.'
-      )
+.setDescription(
+  'Willkommen bei AVENIX Service!\n\n' +
+  'Bitte wähle den passenden Ticket-Bereich:\n\n' +
+  '🤝 **Partner-Ticket**\n' +
+  'Partnerschaften und Kooperationen\n\n' +
+  '🎧 **Support-Ticket**\n' +
+  'Hilfe und technische Probleme\n\n' +
+  '🛒 **Bestellungs-Ticket**\n' +
+  'Fragen zu Bestellungen und Aufträgen\n\n' +
+  '👥 **Team-Ticket**\n' +
+  'Bewerbungen und Team-Angelegenheiten\n\n' +
+  '💬 **Sonstiges**\n' +
+  'Andere Anliegen\n\n' +
+  '👇 Wähle unten deine Kategorie aus.'
+)
       .setFooter({ text: 'AVENIX Service | Ticket-System' });
 
     const menu = new StringSelectMenuBuilder()
