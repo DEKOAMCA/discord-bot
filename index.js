@@ -18,7 +18,7 @@ const client = new Client({
 });
 
 const TICKET_CHANNEL_ID = '1572968883793432611';
-const TICKET_CATEGORY_ID = '1572968883793432608';
+const TICKET_CATEGORY_ID = '1572968884120592433';
 const TEAM_ROLE_ID = '1573762731713237042';
 
 client.once('ready', async () => {
