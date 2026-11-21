@@ -42,8 +42,16 @@ client.once('ready', async () => {
       .setStyle(ButtonStyle.Primary)
   );
 
+const messages = await channel.messages.fetch({ limit: 20 });
+
+const alreadyExists = messages.some(message =>
+  message.author.id === client.user.id &&
+  message.embeds.some(e => e.title === '🎫 AVENIX SERVICE SUPPORT')
+);
+
+if (!alreadyExists) {
   await channel.send({ embeds: [embed], components: [row] });
-});
+}
 
 client.on('interactionCreate', async interaction => {
   if (!interaction.isButton()) return;
