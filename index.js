@@ -109,10 +109,9 @@ client.on('interactionCreate', async interaction => {
       components: [closeRow]
     });
 
-    await interaction.reply({
-      content: `Dein Ticket wurde erstellt: ${ticket}`,
-      ephemeral: true
-    });
+await interaction.editReply({
+  content: `Dein Ticket wurde erstellt: ${ticket}`
+});
   }
 
   if (interaction.customId === 'close_ticket') {
