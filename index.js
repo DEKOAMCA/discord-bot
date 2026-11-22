@@ -85,12 +85,12 @@ function createPanelEmbed() {
       '🟣 **Allgemeine Hilfe**\n' +
       '🟣 **Bestellungen**\n' +
       '🟣 **Partnerschaften**\n' +
-      '🟣 **Team-Support**\n\n' +
+      '🟣 **Team-Bewerben**\n\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
       'Klicke auf den Button, um ein Ticket zu erstellen.'
     )
     .setFooter({
-      text: 'AVENIX SERVICE • SUPPORT SYSTEM'
+      text: 'AVENIX SERVICE'
     })
     .setTimestamp();
 }
