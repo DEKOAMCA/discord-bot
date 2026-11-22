@@ -12,8 +12,11 @@ const {
 } = require('discord.js');
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
-});
+intents: [
+  GatewayIntentBits.Guilds,
+  GatewayIntentBits.GuildMembers
+]  
+);
 
 // AVENIX SERVICE KONFIGURATION
 
