@@ -1,5 +1,6 @@
+
 {
-  "name": "avenix-discord-bot",
+  "name": "avenix-service-bot",
   "version": "1.0.0",
   "description": "AVENIX Service Discord Bot",
   "main": "index.js",
