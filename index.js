@@ -15,168 +15,221 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
+// AVENIX SERVICE KONFIGURATION
+
 const TICKET_CHANNEL_ID = '1572968883793432611';
-const TICKET_CATEGORY_ID = '1572968883793432608';
 const TEAM_ROLE_ID = '1573762731713237042';
+const TICKET_LOG_CHANNEL_ID = '1573851855979544586';
 
 const COLOR = '#9410d1';
+
+// EIGENE DISCORD-KATEGORIEN
 
 const categories = {
   partner: {
     label: 'Partner-Ticket',
     emoji: '🤝',
     description: 'Partnerschaften und Kooperationen',
-    message: 'Hier kannst du eine Partnerschaft mit AVENIX Service anfragen.'
+    message: 'Bitte beschreibe dein Anliegen zur Partnerschaft.',
+    categoryId: '1572968884120592432'
   },
+
   support: {
     label: 'Support-Ticket',
     emoji: '🎧',
     description: 'Hilfe und technische Probleme',
-    message: 'Beschreibe bitte dein Anliegen. Unser Support hilft dir weiter.'
+    message: 'Bitte beschreibe dein Problem so genau wie möglich.',
+    categoryId: '1572968884120592433'
   },
+
   bestellung: {
     label: 'Bestellungs-Ticket',
     emoji: '🛒',
     description: 'Fragen zu Bestellungen und Aufträgen',
-    message: 'Hier kannst du Fragen zu deiner Bestellung stellen.'
+    message: 'Bitte beschreibe dein Anliegen zur Bestellung.',
+    categoryId: '1572968884250746951'
   },
+
   team: {
     label: 'Team-Ticket',
     emoji: '👥',
     description: 'Bewerbungen und Team-Angelegenheiten',
-    message: 'Hier kannst du dich bewerben oder Team-Angelegenheiten klären.'
+    message: 'Bitte beschreibe dein Anliegen an unser Team.',
+    categoryId: '1572968884389154847'
   },
+
   sonstiges: {
     label: 'Sonstiges',
     emoji: '💬',
     description: 'Andere Anliegen',
-    message: 'Beschreibe bitte dein sonstiges Anliegen.'
+    message: 'Bitte beschreibe dein Anliegen.',
+    categoryId: '1572968884250746955'
   }
 };
+
+// BOT START
 
 client.once('ready', async () => {
   console.log(`${client.user.tag} ist online!`);
 
   try {
-    const channel = await client.channels.fetch(TICKET_CHANNEL_ID);
+    const ticketChannel = await client.channels.fetch(TICKET_CHANNEL_ID);
 
-    if (!channel || !channel.isTextBased()) {
-      console.log('Ticket-Channel nicht gefunden!');
+    if (!ticketChannel || !ticketChannel.isTextBased()) {
+      console.log('Ticket-Erstellungskanal nicht gefunden!');
       return;
     }
 
-    const messages = await channel.messages.fetch({ limit: 50 });
-
-    const oldMenu = messages.find(message =>
-      message.author.id === client.user.id &&
-      message.embeds.some(embed =>
-        embed.title === '🎫 AVENIX SERVICE SUPPORT' ||
-        embed.title === '🎫 AVENIX SERVICE – TICKET AUSWAHL'
-      )
-    );
-
     const embed = new EmbedBuilder()
       .setColor(COLOR)
-      .setTitle('🎫 AVENIX SERVICE – TICKET SYSTEM ')
-.setDescription(
-  'Willkommen bei AVENIX Service!\n\n' +
-  'Bitte wähle den passenden Ticket-Bereich:\n\n' +
-  '🤝 **Partner-Ticket**\n' +
-  'Partnerschaften und Kooperationen\n\n' +
-  '🎧 **Support-Ticket**\n' +
-  'Hilfe und technische Probleme\n\n' +
-  '🛒 **Bestellungs-Ticket**\n' +
-  'Fragen zu Bestellungen und Aufträgen\n\n' +
-  '👥 **Team-Ticket**\n' +
-  'Bewerbungen und Team-Angelegenheiten\n\n' +
-  '💬 **Sonstiges**\n' +
-  'Andere Anliegen\n\n' +
-  '👇 Wähle unten deine Kategorie aus.'
-)
-      .setFooter({ text: 'AVENIX Service | Ticket-System' });
+      .setTitle('🎫 AVENIX SERVICE – TICKET AUSWAHL')
+      .setDescription(
+        'Willkommen bei AVENIX Service!\n\n' +
+        'Bitte wähle deinen passenden Ticket-Bereich:\n\n' +
+        '🤝 **Partner-Ticket**\n' +
+        'Partnerschaften und Kooperationen\n\n' +
+        '🎧 **Support-Ticket**\n' +
+        'Hilfe und technische Probleme\n\n' +
+        '🛒 **Bestellungs-Ticket**\n' +
+        'Fragen zu Bestellungen und Aufträgen\n\n' +
+        '👥 **Team-Ticket**\n' +
+        'Bewerbungen und Team-Angelegenheiten\n\n' +
+        '💬 **Sonstiges**\n' +
+        'Andere Anliegen\n\n' +
+        '👇 Wähle unten deine Kategorie aus.'
+      )
+      .setFooter({
+        text: 'AVENIX Service • Ticket-System'
+      });
 
     const menu = new StringSelectMenuBuilder()
       .setCustomId('ticket_category')
       .setPlaceholder('Wähle deine Ticket-Kategorie')
       .addOptions(
-        Object.entries(categories).map(([value, category]) => ({
+        Object.entries(categories).map(([key, category]) => ({
           label: category.label,
           description: category.description,
-          value,
+          value: key,
           emoji: category.emoji
         }))
       );
 
     const row = new ActionRowBuilder().addComponents(menu);
 
-    if (oldMenu) {
-      await oldMenu.edit({
+    const messages = await ticketChannel.messages.fetch({
+      limit: 50
+    });
+
+    const existingMessage = messages.find(message =>
+      message.author.id === client.user.id &&
+      message.embeds.some(embed =>
+        embed.title === '🎫 AVENIX SERVICE – TICKET AUSWAHL'
+      )
+    );
+
+    if (existingMessage) {
+      await existingMessage.edit({
         embeds: [embed],
         components: [row]
       });
-      console.log('Ticket-Menü aktualisiert.');
+
+      console.log('Ticket-Menü aktualisiert!');
     } else {
-      await channel.send({
+      await ticketChannel.send({
         embeds: [embed],
         components: [row]
       });
-      console.log('Ticket-Menü erstellt.');
+
+      console.log('Ticket-Menü erstellt!');
     }
 
   } catch (error) {
-    console.error('Menü-Fehler:', error);
+    console.error('Fehler beim Ticket-Menü:', error);
   }
 });
 
+// INTERACTIONS
+
 client.on('interactionCreate', async interaction => {
 
-  // KATEGORIE AUSWÄHLEN
-  if (interaction.isStringSelectMenu() &&
-      interaction.customId === 'ticket_category') {
+  try {
 
-    await interaction.deferReply({ ephemeral: true });
+    // TICKET ERSTELLEN
 
-    try {
-      const guild = interaction.guild;
+    if (
+      interaction.isStringSelectMenu() &&
+      interaction.customId === 'ticket_category'
+    ) {
+
+      await interaction.deferReply({
+        ephemeral: true
+      });
+
       const selected = interaction.values[0];
       const category = categories[selected];
+      const guild = interaction.guild;
 
       if (!category) {
-        return interaction.editReply('Ungültige Ticket-Kategorie.');
+        await interaction.editReply({
+          content: 'Diese Ticket-Kategorie existiert nicht.'
+        });
+        return;
+      }
+
+      const parentCategory = await guild.channels.fetch(
+        category.categoryId
+      );
+
+      if (
+        !parentCategory ||
+        parentCategory.type !== ChannelType.GuildCategory
+      ) {
+        await interaction.editReply({
+          content: 'Die Discord-Ticket-Kategorie wurde nicht gefunden. Bitte prüfe die Kategorie-ID.'
+        });
+        return;
       }
 
       const allChannels = await guild.channels.fetch();
 
-      const existing = allChannels.find(channel =>
-        channel &&
-        channel.parentId === TICKET_CATEGORY_ID &&
-        channel.topic === `ticket-owner:${interaction.user.id}`
+      const existingTicket = allChannels.find(channel =>
+        channel.topic?.includes(`ticket-owner:${interaction.user.id}`) &&
+        channel.topic?.includes(`ticket-type:${selected}`)
       );
 
-      if (existing) {
-        return interaction.editReply(
-          `Du hast bereits ein offenes Ticket: ${existing}`
-        );
+      if (existingTicket) {
+        await interaction.editReply({
+          content: `Du hast bereits ein Ticket dieser Kategorie: ${existingTicket}`
+        });
+        return;
       }
 
-      const username = interaction.user.username
+      const safeUsername = interaction.user.username
         .toLowerCase()
-        .replace(/[^a-z0-9-]/g, '')
-        .slice(0, 20) || 'user';
+        .replace(/[^a-z0-9-]/g, '-')
+        .slice(0, 20);
 
-      const ticket = await guild.channels.create({
-        name: `${selected}-${username}`,
+      const ticketChannel = await guild.channels.create({
+
+        name: `${selected}-${safeUsername}`,
+
         type: ChannelType.GuildText,
-        parent: TICKET_CATEGORY_ID,
-        topic: `ticket-owner:${interaction.user.id}`,
+
+        parent: category.categoryId,
+
+        topic:
+          `ticket-owner:${interaction.user.id} | ` +
+          `ticket-type:${selected}`,
 
         permissionOverwrites: [
+
           {
             id: guild.id,
             deny: [
               PermissionsBitField.Flags.ViewChannel
             ]
           },
+
           {
             id: interaction.user.id,
             allow: [
@@ -185,6 +238,7 @@ client.on('interactionCreate', async interaction => {
               PermissionsBitField.Flags.ReadMessageHistory
             ]
           },
+
           {
             id: TEAM_ROLE_ID,
             allow: [
@@ -193,6 +247,7 @@ client.on('interactionCreate', async interaction => {
               PermissionsBitField.Flags.ReadMessageHistory
             ]
           },
+
           {
             id: client.user.id,
             allow: [
@@ -202,74 +257,190 @@ client.on('interactionCreate', async interaction => {
               PermissionsBitField.Flags.EmbedLinks
             ]
           }
+
         ]
       });
 
-      const embed = new EmbedBuilder()
+      const ticketEmbed = new EmbedBuilder()
         .setColor(COLOR)
         .setTitle(`${category.emoji} ${category.label}`)
         .setDescription(
           `Hallo ${interaction.user}!\n\n` +
           `${category.message}\n\n` +
-          'Unser Team wird sich so schnell wie möglich melden.'
+          'Unser Team wird sich schnellstmöglich um dich kümmern.'
         )
-        .setFooter({ text: 'AVENIX Service Support' })
+        .setFooter({
+          text: 'AVENIX Service Support'
+        })
         .setTimestamp();
 
-      const closeButton = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('close_ticket')
-          .setLabel('Ticket schließen')
-          .setEmoji('🔒')
-          .setStyle(ButtonStyle.Danger)
-      );
+      const closeButton = new ButtonBuilder()
+        .setCustomId('close_ticket')
+        .setLabel('Ticket schließen')
+        .setEmoji('🔒')
+        .setStyle(ButtonStyle.Danger);
 
-      await ticket.send({
+      const row = new ActionRowBuilder()
+        .addComponents(closeButton);
+
+      await ticketChannel.send({
         content: `${interaction.user} <@&${TEAM_ROLE_ID}>`,
-        embeds: [embed],
-        components: [closeButton]
+        embeds: [ticketEmbed],
+        components: [row]
       });
 
       await interaction.editReply({
-        content: `Dein ${category.label} wurde erstellt: ${ticket}`
+        content: `Dein Ticket wurde erstellt: ${ticketChannel}`
       });
 
-      console.log(`${category.label} erstellt: ${ticket.name}`);
-
-    } catch (error) {
-      console.error('Ticket-Fehler:', error);
-
-      await interaction.editReply({
-        content: 'Beim Erstellen des Tickets ist ein Fehler aufgetreten.'
-      }).catch(() => {});
     }
-  }
 
-  // TICKET SCHLIESSEN
-  if (interaction.isButton() &&
-      interaction.customId === 'close_ticket') {
+    // TICKET SCHLIESSEN
 
-    const channel = interaction.channel;
-    const ownerId = channel.topic?.replace('ticket-owner:', '');
+    if (
+      interaction.isButton() &&
+      interaction.customId === 'close_ticket'
+    ) {
 
-    const isOwner = interaction.user.id === ownerId;
-    const isTeam = interaction.member.roles.cache.has(TEAM_ROLE_ID);
+      const channel = interaction.channel;
+      const member = interaction.member;
 
-    if (!isOwner && !isTeam) {
-      return interaction.reply({
-        content: 'Du darfst dieses Ticket nicht schließen.',
+      const ownerMatch = channel.topic?.match(/ticket-owner:(\d+)/);
+      const ownerId = ownerMatch ? ownerMatch[1] : null;
+
+      const typeMatch = channel.topic?.match(/ticket-type:([a-z]+)/);
+      const ticketType = typeMatch ? typeMatch[1] : null;
+
+      const category = categories[ticketType];
+
+      const isOwner = ownerId === interaction.user.id;
+
+      const isTeam = member.roles.cache.has(TEAM_ROLE_ID);
+
+      if (!isOwner && !isTeam) {
+        await interaction.reply({
+          content: 'Du darfst dieses Ticket nicht schließen!',
+          ephemeral: true
+        });
+        return;
+      }
+
+      await interaction.deferReply({
         ephemeral: true
       });
+
+      // TICKET-LOG ERSTELLEN
+
+      let logSuccess = false;
+
+      try {
+
+        const logChannel = await client.channels.fetch(
+          TICKET_LOG_CHANNEL_ID
+        );
+
+        if (!logChannel || !logChannel.isTextBased()) {
+          throw new Error('Ticket-Log-Channel nicht gefunden!');
+        }
+
+        const logEmbed = new EmbedBuilder()
+          .setColor(COLOR)
+          .setTitle('🔒 Ticket geschlossen')
+          .addFields(
+
+            {
+              name: '🎫 Ticket',
+              value: channel.name,
+              inline: true
+            },
+
+            {
+              name: '📂 Kategorie',
+              value: category
+                ? `${category.emoji} ${category.label}`
+                : 'Unbekannt',
+              inline: true
+            },
+
+            {
+              name: '👤 Ticket-Ersteller',
+              value: ownerId
+                ? `<@${ownerId}>`
+                : 'Unbekannt',
+              inline: true
+            },
+
+            {
+              name: '🔐 Geschlossen von',
+              value: `${interaction.user}`,
+              inline: true
+            },
+
+            {
+              name: '📅 Erstellt am',
+              value: `<t:${Math.floor(channel.createdTimestamp / 1000)}:F>`,
+              inline: false
+            },
+
+            {
+              name: '🕒 Geschlossen am',
+              value: `<t:${Math.floor(Date.now() / 1000)}:F>`,
+              inline: false
+            }
+
+          )
+          .setFooter({
+            text: 'AVENIX Service • Ticket-Logs'
+          })
+          .setTimestamp();
+
+        await logChannel.send({
+          embeds: [logEmbed]
+        });
+
+        logSuccess = true;
+
+      } catch (error) {
+        console.error('Ticket-Log-Fehler:', error);
+      }
+
+      await interaction.editReply({
+        content: logSuccess
+          ? 'Ticket wird geschlossen. Das Log wurde gespeichert. 🔒'
+          : 'Ticket wird geschlossen. Achtung: Das Log konnte nicht gesendet werden!'
+      });
+
+      setTimeout(async () => {
+
+        try {
+          await channel.delete('Ticket wurde geschlossen');
+        } catch (error) {
+          console.error('Fehler beim Löschen:', error);
+        }
+
+      }, 3000);
+
     }
 
-    await interaction.reply({
-      content: '🔒 Dieses Ticket wird in 3 Sekunden geschlossen.'
-    });
+  } catch (error) {
 
-    setTimeout(() => {
-      channel.delete().catch(console.error);
-    }, 3000);
+    console.error('Interaction-Fehler:', error);
+
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({
+        content: 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.'
+      }).catch(() => {});
+    } else {
+      await interaction.reply({
+        content: 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.',
+        ephemeral: true
+      }).catch(() => {});
+    }
+
   }
+
 });
+
+// BOT LOGIN
 
 client.login(process.env.DISCORD_TOKEN);
