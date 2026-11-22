@@ -18,6 +18,10 @@ const client = new Client({
   ]
 });
 
+// ======================================
+// AVENIX KONFIGURATION
+// ======================================
+
 const COLOR = '#9410d1';
 
 const CONFIG = {
@@ -65,23 +69,23 @@ const categories = {
   }
 };
 
-// =====================================
-// TICKET-MENÜ
-// =====================================
+// ======================================
+// TICKET PANEL
+// ======================================
 
 function createPanelEmbed() {
   return new EmbedBuilder()
     .setColor(COLOR)
-    .setTitle('💜 AVENIX | SUPPORT')
+    .setTitle('AVENIX | SUPPORT')
     .setDescription(
-      '**Willkommen beim AVENIX Support.**\n\n' +
+      '## Willkommen beim AVENIX Support.\n\n' +
       'Du benötigst Hilfe oder möchtest unseren Service in Anspruch nehmen?\n\n' +
       'Öffne ein Ticket und unser Team kümmert sich um dein Anliegen.\n\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
-      '📌 **Allgemeine Hilfe**\n' +
-      '🛒 **Bestellungen**\n' +
-      '🤝 **Partnerschaften**\n' +
-      '👥 **Team-Support**\n\n' +
+      '🟣 **Allgemeine Hilfe**\n' +
+      '🟣 **Bestellungen**\n' +
+      '🟣 **Partnerschaften**\n' +
+      '🟣 **Team-Support**\n\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
       'Klicke auf den Button, um ein Ticket zu erstellen.'
     )
@@ -101,18 +105,18 @@ function createPanelButton() {
   );
 }
 
-// =====================================
+// ======================================
 // BOT START
-// =====================================
+// ======================================
 
 client.once('clientReady', async () => {
   console.log(`AVENIX SYSTEM online als ${client.user.tag}`);
 
-  try {
-    for (const guild of client.guilds.cache.values()) {
-      const channel = await guild.channels
-        .fetch(CONFIG.ticketPanelChannel)
-        .catch(() => null);
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      const channel = await guild.channels.fetch(
+        CONFIG.ticketPanelChannel
+      ).catch(() => null);
 
       if (!channel || !channel.isTextBased()) {
         console.error('Ticket-Panel-Channel nicht gefunden.');
@@ -120,33 +124,41 @@ client.once('clientReady', async () => {
       }
 
       const embed = createPanelEmbed();
-      const row = createPanelButton();
+      const button = createPanelButton();
 
-      const messages = await channel.messages.fetch({ limit: 50 });
+      const messages = await channel.messages.fetch({
+        limit: 50
+      });
 
       const oldPanel = messages.find(message =>
         message.author.id === client.user.id &&
         message.embeds.some(embed =>
-          embed.title === '💜 AVENIX | SUPPORT'
+          embed.title === 'AVENIX | SUPPORT'
         )
       );
 
       if (oldPanel) {
         await oldPanel.edit({
           embeds: [embed],
-          components: [row]
+          components: [button]
         });
+
         console.log('Ticket-Menü aktualisiert.');
       } else {
         await channel.send({
           embeds: [embed],
-          components: [row]
+          components: [button]
         });
+
         console.log('Ticket-Menü erstellt.');
       }
+
+    } catch (error) {
+      console.error(
+        'Ticket-Menü konnte nicht geladen werden:',
+        error
+      );
     }
-  } catch (error) {
-    console.error('Ticket-Menü konnte nicht geladen werden:', error);
   }
 });
 
@@ -154,15 +166,15 @@ client.on('error', error => {
   console.error('Discord Client Fehler:', error);
 });
 
-// =====================================
+// ======================================
 // WILLKOMMENS-SYSTEM
-// =====================================
+// ======================================
 
 client.on('guildMemberAdd', async member => {
   try {
-    const channel = await member.guild.channels
-      .fetch(CONFIG.welcomeChannel)
-      .catch(() => null);
+    const channel = await member.guild.channels.fetch(
+      CONFIG.welcomeChannel
+    ).catch(() => null);
 
     if (!channel || !channel.isTextBased()) return;
 
@@ -196,14 +208,14 @@ client.on('guildMemberAdd', async member => {
   }
 });
 
-// =====================================
-// INTERACTIONS
-// =====================================
+// ======================================
+// INTERACTION SYSTEM
+// ======================================
 
 client.on('interactionCreate', async interaction => {
   try {
 
-    // BUTTON: TICKET-AUSWAHL ÖFFNEN
+    // TICKET-AUSWAHL ÖFFNEN
     if (
       interaction.isButton() &&
       interaction.customId === 'avenix_open_ticket'
@@ -220,7 +232,8 @@ client.on('interactionCreate', async interaction => {
           }))
         );
 
-      const row = new ActionRowBuilder().addComponents(menu);
+      const row = new ActionRowBuilder()
+        .addComponents(menu);
 
       return interaction.reply({
         content: '💜 **Welche Art von Ticket möchtest du erstellen?**',
@@ -234,19 +247,25 @@ client.on('interactionCreate', async interaction => {
       interaction.isStringSelectMenu() &&
       interaction.customId === 'avenix_ticket_select'
     ) {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({
+        ephemeral: true
+      });
 
       const selected = interaction.values[0];
       const category = categories[selected];
 
       if (!category) {
-        return interaction.editReply('Ungültige Ticket-Kategorie.');
+        return interaction.editReply(
+          'Diese Ticket-Kategorie ist ungültig.'
+        );
       }
 
       const guild = interaction.guild;
       const user = interaction.user;
 
-      const existingTicket = guild.channels.cache.find(channel =>
+      const existingChannels = await guild.channels.fetch();
+
+      const existingTicket = existingChannels.find(channel =>
         channel.type === ChannelType.GuildText &&
         channel.topic === `avenix-ticket:${user.id}:${selected}`
       );
@@ -257,9 +276,9 @@ client.on('interactionCreate', async interaction => {
         );
       }
 
-      const ticketCategory = await guild.channels
-        .fetch(category.categoryId)
-        .catch(() => null);
+      const ticketCategory = await guild.channels.fetch(
+        category.categoryId
+      ).catch(() => null);
 
       if (
         !ticketCategory ||
@@ -270,18 +289,31 @@ client.on('interactionCreate', async interaction => {
         );
       }
 
+      const teamRole = await guild.roles.fetch(CONFIG.teamRole);
+
+      if (!teamRole) {
+        return interaction.editReply(
+          'Die Team-Rolle wurde nicht gefunden.'
+        );
+      }
+
+      const safeUsername = user.username
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '')
+        .slice(0, 80) || 'user';
+
       const ticketChannel = await guild.channels.create({
-        name: `${selected}-${user.username}`
-          .toLowerCase()
-          .replace(/[^a-z0-9-]/g, '')
-          .slice(0, 90),
+        name: `${selected}-${safeUsername}`,
         type: ChannelType.GuildText,
         parent: category.categoryId,
         topic: `avenix-ticket:${user.id}:${selected}`,
+
         permissionOverwrites: [
           {
             id: guild.roles.everyone.id,
-            deny: [PermissionsBitField.Flags.ViewChannel]
+            deny: [
+              PermissionsBitField.Flags.ViewChannel
+            ]
           },
           {
             id: user.id,
@@ -323,7 +355,7 @@ client.on('interactionCreate', async interaction => {
           'Unser Team wird sich schnellstmöglich bei dir melden.'
         )
         .setFooter({
-          text: 'AVENIX Service • Ticket-System'
+          text: 'AVENIX SERVICE • TICKET SYSTEM'
         })
         .setTimestamp();
 
@@ -364,9 +396,9 @@ client.on('interactionCreate', async interaction => {
 
       const [, creatorId] = channel.topic.split(':');
 
-      const member = await guild.members
-        .fetch(interaction.user.id)
-        .catch(() => null);
+      const member = await guild.members.fetch(
+        interaction.user.id
+      ).catch(() => null);
 
       const isCreator = interaction.user.id === creatorId;
       const isTeam = member?.roles.cache.has(CONFIG.teamRole);
@@ -383,7 +415,9 @@ client.on('interactionCreate', async interaction => {
       const closedEmbed = new EmbedBuilder()
         .setColor(COLOR)
         .setTitle('🔒 Ticket wird geschlossen')
-        .setDescription('Dieses Ticket wird in Kürze geschlossen.')
+        .setDescription(
+          'Dieses Ticket wird in 5 Sekunden geschlossen.'
+        )
         .setTimestamp();
 
       await interaction.editReply({
@@ -392,64 +426,70 @@ client.on('interactionCreate', async interaction => {
       });
 
       // TICKET-LOG
-      const logChannel = await guild.channels
-        .fetch(CONFIG.ticketLogChannel)
-        .catch(() => null);
+      try {
+        const logChannel = await guild.channels.fetch(
+          CONFIG.ticketLogChannel
+        ).catch(() => null);
 
-      if (logChannel && logChannel.isTextBased()) {
-        const creator = await client.users
-          .fetch(creatorId)
-          .catch(() => null);
+        if (logChannel && logChannel.isTextBased()) {
+          const creator = await client.users.fetch(
+            creatorId
+          ).catch(() => null);
 
-        const categoryKey = channel.topic.split(':')[2];
-        const category = categories[categoryKey];
+          const categoryKey = channel.topic.split(':')[2];
+          const category = categories[categoryKey];
 
-        const logEmbed = new EmbedBuilder()
-          .setColor(COLOR)
-          .setTitle('📁 TICKET GESCHLOSSEN')
-          .addFields(
-            {
-              name: '🎫 Ticket',
-              value: channel.name,
-              inline: true
-            },
-            {
-              name: '📂 Kategorie',
-              value: category?.label || 'Unbekannt',
-              inline: true
-            },
-            {
-              name: '👤 Ersteller',
-              value: creator
-                ? `${creator.tag} (${creator.id})`
-                : creatorId
-            },
-            {
-              name: '🔒 Geschlossen von',
-              value: `${interaction.user.tag} (${interaction.user.id})`
-            },
-            {
-              name: '🕒 Erstellt',
-              value: `<t:${Math.floor(channel.createdTimestamp / 1000)}:F>`
-            },
-            {
-              name: '🕒 Geschlossen',
-              value: `<t:${Math.floor(Date.now() / 1000)}:F>`
-            }
-          )
-          .setFooter({
-            text: 'AVENIX Service • Ticket-Logs'
-          })
-          .setTimestamp();
+          const logEmbed = new EmbedBuilder()
+            .setColor(COLOR)
+            .setTitle('📁 TICKET GESCHLOSSEN')
+            .addFields(
+              {
+                name: '🎫 Ticket',
+                value: channel.name,
+                inline: true
+              },
+              {
+                name: '📂 Kategorie',
+                value: category?.label || 'Unbekannt',
+                inline: true
+              },
+              {
+                name: '👤 Ersteller',
+                value: creator
+                  ? `${creator.tag} (${creator.id})`
+                  : creatorId
+              },
+              {
+                name: '🔒 Geschlossen von',
+                value: `${interaction.user.tag} (${interaction.user.id})`
+              },
+              {
+                name: '🕒 Erstellt',
+                value: `<t:${Math.floor(channel.createdTimestamp / 1000)}:F>`
+              },
+              {
+                name: '🕒 Geschlossen',
+                value: `<t:${Math.floor(Date.now() / 1000)}:F>`
+              }
+            )
+            .setFooter({
+              text: 'AVENIX SERVICE • TICKET LOGS'
+            })
+            .setTimestamp();
 
-        await logChannel.send({
-          embeds: [logEmbed]
-        });
+          await logChannel.send({
+            embeds: [logEmbed]
+          });
+        }
+
+      } catch (error) {
+        console.error('Ticket-Log-Fehler:', error);
       }
 
       setTimeout(async () => {
-        await channel.delete('AVENIX Ticket geschlossen')
-          .catch(console.error);
+        await channel.delete(
+          'AVENIX Ticket geschlossen'
+        ).catch(console.error);
       }, 5000);
     }
 
@@ -469,12 +509,12 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-// =====================================
+// ======================================
 // LOGIN
-// =====================================
+// ======================================
 
 if (!process.env.DISCORD_TOKEN) {
-  console.error('DISCORD_TOKEN fehlt in Railway!');
+  console.error('FEHLER: DISCORD_TOKEN fehlt in Railway!');
   process.exit(1);
 }
 
