@@ -12,21 +12,26 @@ const {
 } = require('discord.js');
 
 const client = new Client({
-intents: [
-  GatewayIntentBits.Guilds,
-  GatewayIntentBits.GuildMembers
-]  
-);
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers
+  ]
+});
 
+// ==================================
 // AVENIX SERVICE KONFIGURATION
+// ==================================
 
 const TICKET_CHANNEL_ID = '1572968883793432611';
 const TEAM_ROLE_ID = '1573762731713237042';
 const TICKET_LOG_CHANNEL_ID = '1573851855979544586';
+const WELCOME_CHANNEL_ID = '1572968883281993869';
 
 const COLOR = '#9410d1';
 
-// EIGENE DISCORD-KATEGORIEN
+// ==================================
+// TICKET KATEGORIEN
+// ==================================
 
 const categories = {
   partner: {
@@ -70,16 +75,20 @@ const categories = {
   }
 };
 
+// ==================================
 // BOT START
+// ==================================
 
 client.once('ready', async () => {
   console.log(`${client.user.tag} ist online!`);
 
   try {
-    const ticketChannel = await client.channels.fetch(TICKET_CHANNEL_ID);
+    const ticketChannel = await client.channels.fetch(
+      TICKET_CHANNEL_ID
+    );
 
     if (!ticketChannel || !ticketChannel.isTextBased()) {
-      console.log('Ticket-Erstellungskanal nicht gefunden!');
+      console.log('Ticket-Channel nicht gefunden!');
       return;
     }
 
@@ -125,8 +134,8 @@ client.once('ready', async () => {
 
     const existingMessage = messages.find(message =>
       message.author.id === client.user.id &&
-      message.embeds.some(embed =>
-        embed.title === '🎫 AVENIX SERVICE – TICKET AUSWAHL'
+      message.embeds.some(e =>
+        e.title === '🎫 AVENIX SERVICE – TICKET AUSWAHL'
       )
     );
 
@@ -135,26 +144,69 @@ client.once('ready', async () => {
         embeds: [embed],
         components: [row]
       });
-
       console.log('Ticket-Menü aktualisiert!');
     } else {
       await ticketChannel.send({
         embeds: [embed],
         components: [row]
       });
-
       console.log('Ticket-Menü erstellt!');
     }
 
   } catch (error) {
-    console.error('Fehler beim Ticket-Menü:', error);
+    console.error('Ticket-Menü Fehler:', error);
   }
 });
 
+// ==================================
+// WILLKOMMEN SYSTEM
+// ==================================
+
+client.on('guildMemberAdd', async member => {
+  try {
+    const welcomeChannel = await member.guild.channels.fetch(
+      WELCOME_CHANNEL_ID
+    );
+
+    if (!welcomeChannel || !welcomeChannel.isTextBased()) {
+      console.log('Willkommen-Channel nicht gefunden!');
+      return;
+    }
+
+    const welcomeEmbed = new EmbedBuilder()
+      .setColor(COLOR)
+      .setTitle('💜 WILLKOMMEN BEI AVENIX SERVICE')
+      .setDescription(
+        `Hey ${member}!\n\n` +
+        'Herzlich willkommen auf unserem Discord-Server!\n\n' +
+        'Wir freuen uns, dass du dabei bist. ' +
+        'Schau dich in Ruhe um und lerne unsere Community kennen.\n\n' +
+        `👤 **Mitglied:** ${member.user.username}\n` +
+        `👥 **Mitglieder insgesamt:** ${member.guild.memberCount}\n\n` +
+        'Viel Spaß bei AVENIX Service! 💜'
+      )
+      .setThumbnail(member.user.displayAvatarURL())
+      .setFooter({
+        text: 'AVENIX Service • Willkommen'
+      })
+      .setTimestamp();
+
+    await welcomeChannel.send({
+      embeds: [welcomeEmbed]
+    });
+
+    console.log(`${member.user.tag} ist beigetreten!`);
+
+  } catch (error) {
+    console.error('Willkommen-Fehler:', error);
+  }
+});
+
+// ==================================
 // INTERACTIONS
+// ==================================
 
 client.on('interactionCreate', async interaction => {
-
   try {
 
     // TICKET ERSTELLEN
@@ -163,7 +215,6 @@ client.on('interactionCreate', async interaction => {
       interaction.isStringSelectMenu() &&
       interaction.customId === 'ticket_category'
     ) {
-
       await interaction.deferReply({
         ephemeral: true
       });
@@ -188,7 +239,7 @@ client.on('interactionCreate', async interaction => {
         parentCategory.type !== ChannelType.GuildCategory
       ) {
         await interaction.editReply({
-          content: 'Die Discord-Ticket-Kategorie wurde nicht gefunden. Bitte prüfe die Kategorie-ID.'
+          content: 'Die Discord-Kategorie wurde nicht gefunden. Bitte prüfe die Kategorie-ID.'
         });
         return;
       }
@@ -196,7 +247,9 @@ client.on('interactionCreate', async interaction => {
       const allChannels = await guild.channels.fetch();
 
       const existingTicket = allChannels.find(channel =>
-        channel.topic?.includes(`ticket-owner:${interaction.user.id}`) &&
+        channel.topic?.includes(
+          `ticket-owner:${interaction.user.id}`
+        ) &&
         channel.topic?.includes(`ticket-type:${selected}`)
       );
 
@@ -213,11 +266,8 @@ client.on('interactionCreate', async interaction => {
         .slice(0, 20);
 
       const ticketChannel = await guild.channels.create({
-
         name: `${selected}-${safeUsername}`,
-
         type: ChannelType.GuildText,
-
         parent: category.categoryId,
 
         topic:
@@ -225,14 +275,12 @@ client.on('interactionCreate', async interaction => {
           `ticket-type:${selected}`,
 
         permissionOverwrites: [
-
           {
             id: guild.id,
             deny: [
               PermissionsBitField.Flags.ViewChannel
             ]
           },
-
           {
             id: interaction.user.id,
             allow: [
@@ -241,7 +289,6 @@ client.on('interactionCreate', async interaction => {
               PermissionsBitField.Flags.ReadMessageHistory
             ]
           },
-
           {
             id: TEAM_ROLE_ID,
             allow: [
@@ -250,7 +297,6 @@ client.on('interactionCreate', async interaction => {
               PermissionsBitField.Flags.ReadMessageHistory
             ]
           },
-
           {
             id: client.user.id,
             allow: [
@@ -260,7 +306,6 @@ client.on('interactionCreate', async interaction => {
               PermissionsBitField.Flags.EmbedLinks
             ]
           }
-
         ]
       });
 
@@ -295,16 +340,16 @@ client.on('interactionCreate', async interaction => {
       await interaction.editReply({
         content: `Dein Ticket wurde erstellt: ${ticketChannel}`
       });
-
     }
 
+    // ==================================
     // TICKET SCHLIESSEN
+    // ==================================
 
     if (
       interaction.isButton() &&
       interaction.customId === 'close_ticket'
     ) {
-
       const channel = interaction.channel;
       const member = interaction.member;
 
@@ -317,7 +362,6 @@ client.on('interactionCreate', async interaction => {
       const category = categories[ticketType];
 
       const isOwner = ownerId === interaction.user.id;
-
       const isTeam = member.roles.cache.has(TEAM_ROLE_ID);
 
       if (!isOwner && !isTeam) {
@@ -332,12 +376,9 @@ client.on('interactionCreate', async interaction => {
         ephemeral: true
       });
 
-      // TICKET-LOG ERSTELLEN
-
       let logSuccess = false;
 
       try {
-
         const logChannel = await client.channels.fetch(
           TICKET_LOG_CHANNEL_ID
         );
@@ -350,13 +391,11 @@ client.on('interactionCreate', async interaction => {
           .setColor(COLOR)
           .setTitle('🔒 Ticket geschlossen')
           .addFields(
-
             {
               name: '🎫 Ticket',
               value: channel.name,
               inline: true
             },
-
             {
               name: '📂 Kategorie',
               value: category
@@ -364,7 +403,6 @@ client.on('interactionCreate', async interaction => {
                 : 'Unbekannt',
               inline: true
             },
-
             {
               name: '👤 Ticket-Ersteller',
               value: ownerId
@@ -372,25 +410,21 @@ client.on('interactionCreate', async interaction => {
                 : 'Unbekannt',
               inline: true
             },
-
             {
               name: '🔐 Geschlossen von',
               value: `${interaction.user}`,
               inline: true
             },
-
             {
               name: '📅 Erstellt am',
               value: `<t:${Math.floor(channel.createdTimestamp / 1000)}:F>`,
               inline: false
             },
-
             {
               name: '🕒 Geschlossen am',
               value: `<t:${Math.floor(Date.now() / 1000)}:F>`,
               inline: false
             }
-
           )
           .setFooter({
             text: 'AVENIX Service • Ticket-Logs'
@@ -414,19 +448,15 @@ client.on('interactionCreate', async interaction => {
       });
 
       setTimeout(async () => {
-
         try {
           await channel.delete('Ticket wurde geschlossen');
         } catch (error) {
           console.error('Fehler beim Löschen:', error);
         }
-
       }, 3000);
-
     }
 
   } catch (error) {
-
     console.error('Interaction-Fehler:', error);
 
     if (interaction.deferred || interaction.replied) {
@@ -439,51 +469,12 @@ client.on('interactionCreate', async interaction => {
         ephemeral: true
       }).catch(() => {});
     }
-
-  }
-
-});
-
-
-const WELCOME_CHANNEL_ID = '1572968883281993869';
-
-client.on('guildMemberAdd', async member => {
-  try {
-    const welcomeChannel = await member.guild.channels.fetch(
-      WELCOME_CHANNEL_ID
-    );
-
-    if (!welcomeChannel || !welcomeChannel.isTextBased()) {
-      console.log('Willkommen-Channel nicht gefunden!');
-      return;
-    }
-
-    const welcomeEmbed = new EmbedBuilder()
-      .setColor('#9410d1')
-      .setTitle('💜 WILLKOMMEN BEI AVENIX SERVICE')
-      .setDescription(
-        `Hey ${member}!\n\n` +
-        `Herzlich willkommen auf unserem Discord-Server!\n\n` +
-        `Wir freuen uns, dass du dabei bist. Schau dich in Ruhe um und lerne unsere Community kennen.\n\n` +
-        `👤 **Mitglied:** ${member.user.username}\n` +
-        `👥 **Mitgliedsnummer:** ${member.guild.memberCount}\n\n` +
-        `Viel Spaß bei AVENIX Service! 💜`
-      )
-      .setThumbnail(member.user.displayAvatarURL())
-      .setFooter({ text: 'AVENIX Service • Willkommen' })
-      .setTimestamp();
-
-    await welcomeChannel.send({
-      embeds: [welcomeEmbed]
-    });
-
-    console.log(`${member.user.tag} ist beigetreten!`);
-
-  } catch (error) {
-    console.error('Willkommen-Fehler:', error);
   }
 });
 
+// ==================================
 // BOT LOGIN
+// ==================================
 
 client.login(process.env.DISCORD_TOKEN);
+
