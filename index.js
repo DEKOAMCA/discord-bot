@@ -96,7 +96,7 @@ function createPanelButton() {
     new ButtonBuilder()
       .setCustomId('avenix_open_ticket')
       .setLabel('Ticket erstellen')
-      .setEmoji('＋')
+      .setEmoji('🎫')
       .setStyle(ButtonStyle.Primary)
   );
 }
