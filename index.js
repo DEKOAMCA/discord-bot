@@ -444,6 +444,46 @@ client.on('interactionCreate', async interaction => {
 
 });
 
+
+const WELCOME_CHANNEL_ID = '1572968883281993869';
+
+client.on('guildMemberAdd', async member => {
+  try {
+    const welcomeChannel = await member.guild.channels.fetch(
+      WELCOME_CHANNEL_ID
+    );
+
+    if (!welcomeChannel || !welcomeChannel.isTextBased()) {
+      console.log('Willkommen-Channel nicht gefunden!');
+      return;
+    }
+
+    const welcomeEmbed = new EmbedBuilder()
+      .setColor('#9410d1')
+      .setTitle('💜 WILLKOMMEN BEI AVENIX SERVICE')
+      .setDescription(
+        `Hey ${member}!\n\n` +
+        `Herzlich willkommen auf unserem Discord-Server!\n\n` +
+        `Wir freuen uns, dass du dabei bist. Schau dich in Ruhe um und lerne unsere Community kennen.\n\n` +
+        `👤 **Mitglied:** ${member.user.username}\n` +
+        `👥 **Mitgliedsnummer:** ${member.guild.memberCount}\n\n` +
+        `Viel Spaß bei AVENIX Service! 💜`
+      )
+      .setThumbnail(member.user.displayAvatarURL())
+      .setFooter({ text: 'AVENIX Service • Willkommen' })
+      .setTimestamp();
+
+    await welcomeChannel.send({
+      embeds: [welcomeEmbed]
+    });
+
+    console.log(`${member.user.tag} ist beigetreten!`);
+
+  } catch (error) {
+    console.error('Willkommen-Fehler:', error);
+  }
+});
+
 // BOT LOGIN
 
 client.login(process.env.DISCORD_TOKEN);
