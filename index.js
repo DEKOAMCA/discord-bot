@@ -76,7 +76,7 @@ const categories = {
 function createPanelEmbed() {
   return new EmbedBuilder()
     .setColor(COLOR)
-    .setTitle('AVENIX | SUPPORT')
+    .setTitle('AVENIX SERVICE | SYSTEM')
     .setDescription(
       '## Willkommen beim AVENIX Support.\n\n' +
       'Du benötigst Hilfe oder möchtest unseren Service in Anspruch nehmen?\n\n' +
