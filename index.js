@@ -18,10 +18,6 @@ const client = new Client({
   ]
 });
 
-// ================================
-// AVENIX SERVICE KONFIGURATION
-// ================================
-
 const COLOR = '#9410d1';
 
 const CONFIG = {
@@ -69,75 +65,98 @@ const categories = {
   }
 };
 
-// ================================
-// BOT START
-// ================================
+// =====================================
+// TICKET-MENÜ
+// =====================================
 
-client.once('ready', async () => {
+function createPanelEmbed() {
+  return new EmbedBuilder()
+    .setColor(COLOR)
+    .setTitle('💜 AVENIX | SUPPORT')
+    .setDescription(
+      '**Willkommen beim AVENIX Support.**\n\n' +
+      'Du benötigst Hilfe oder möchtest unseren Service in Anspruch nehmen?\n\n' +
+      'Öffne ein Ticket und unser Team kümmert sich um dein Anliegen.\n\n' +
+      '━━━━━━━━━━━━━━━━━━━━\n\n' +
+      '📌 **Allgemeine Hilfe**\n' +
+      '🛒 **Bestellungen**\n' +
+      '🤝 **Partnerschaften**\n' +
+      '👥 **Team-Support**\n\n' +
+      '━━━━━━━━━━━━━━━━━━━━\n\n' +
+      'Klicke auf den Button, um ein Ticket zu erstellen.'
+    )
+    .setFooter({
+      text: 'AVENIX SERVICE • SUPPORT SYSTEM'
+    })
+    .setTimestamp();
+}
+
+function createPanelButton() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('avenix_open_ticket')
+      .setLabel('Ticket erstellen')
+      .setEmoji('＋')
+      .setStyle(ButtonStyle.Primary)
+  );
+}
+
+// =====================================
+// BOT START
+// =====================================
+
+client.once('clientReady', async () => {
   console.log(`AVENIX SYSTEM online als ${client.user.tag}`);
 
-  for (const guild of client.guilds.cache.values()) {
-    const channel = await guild.channels
-      .fetch(CONFIG.ticketPanelChannel)
-      .catch(() => null);
+  try {
+    for (const guild of client.guilds.cache.values()) {
+      const channel = await guild.channels
+        .fetch(CONFIG.ticketPanelChannel)
+        .catch(() => null);
 
-    if (!channel || !channel.isTextBased()) continue;
+      if (!channel || !channel.isTextBased()) {
+        console.error('Ticket-Panel-Channel nicht gefunden.');
+        continue;
+      }
 
-    const panelEmbed = new EmbedBuilder()
-      .setColor(COLOR)
-      .setTitle('💜 AVENIX SERVICE | TICKETS')
-      .setDescription(
-        'Willkommen beim AVENIX Service!\n\n' +
-        'Wähle unten die passende Kategorie aus, um ein Ticket zu erstellen.\n\n' +
-        '🤝 **Partner Ticket**\n' +
-        '🛠️ **Support Ticket**\n' +
-        '🛒 **Bestellung**\n' +
-        '👥 **Team Ticket**\n' +
-        '📩 **Sonstiges**\n\n' +
-        'Unser Team wird sich schnellstmöglich um dich kümmern.'
-      )
-      .setFooter({ text: 'AVENIX Service • Ticket-System' })
-      .setTimestamp();
+      const embed = createPanelEmbed();
+      const row = createPanelButton();
 
-    const menu = new StringSelectMenuBuilder()
-      .setCustomId('avenix_ticket_select')
-      .setPlaceholder('Wähle eine Ticket-Kategorie aus')
-      .addOptions(
-        Object.entries(categories).map(([key, value]) => ({
-          label: value.label,
-          description: value.description,
-          emoji: value.emoji,
-          value: key
-        }))
+      const messages = await channel.messages.fetch({ limit: 50 });
+
+      const oldPanel = messages.find(message =>
+        message.author.id === client.user.id &&
+        message.embeds.some(embed =>
+          embed.title === '💜 AVENIX | SUPPORT'
+        )
       );
 
-    const row = new ActionRowBuilder().addComponents(menu);
-
-    const messages = await channel.messages.fetch({ limit: 50 });
-    const oldPanel = messages.find(message =>
-      message.author.id === client.user.id &&
-      message.embeds.some(embed =>
-        embed.title === '💜 AVENIX SERVICE | TICKETS'
-      )
-    );
-
-    if (oldPanel) {
-      await oldPanel.edit({
-        embeds: [panelEmbed],
-        components: [row]
-      });
-    } else {
-      await channel.send({
-        embeds: [panelEmbed],
-        components: [row]
-      });
+      if (oldPanel) {
+        await oldPanel.edit({
+          embeds: [embed],
+          components: [row]
+        });
+        console.log('Ticket-Menü aktualisiert.');
+      } else {
+        await channel.send({
+          embeds: [embed],
+          components: [row]
+        });
+        console.log('Ticket-Menü erstellt.');
+      }
     }
+  } catch (error) {
+    console.error('Ticket-Menü konnte nicht geladen werden:', error);
   }
 });
 
-// ================================
+client.on('error', error => {
+  console.error('Discord Client Fehler:', error);
+});
+
+// =====================================
 // WILLKOMMENS-SYSTEM
-// ================================
+// =====================================
 
 client.on('guildMemberAdd', async member => {
   try {
@@ -163,23 +182,52 @@ client.on('guildMemberAdd', async member => {
       .setImage(
         'https://cdn.discordapp.com/attachments/1428053228804636754/1573862134008258680/a2c478a5-20ca-4424-9bb1-8b250666a3a4.png?ex=6b038cd5&is=6b023b55&hm=595aa77ae7a93edc2dcb2610419d7d018c404b286266f4f15cd1f81aa4e02af0&'
       )
-      .setFooter({ text: 'AVENIX Service • Willkommen' })
+      .setFooter({
+        text: 'AVENIX Service • Willkommen'
+      })
       .setTimestamp();
 
     await channel.send({
       embeds: [welcomeEmbed]
     });
+
   } catch (error) {
     console.error('Willkommens-Fehler:', error);
   }
 });
 
-// ================================
-// TICKET-SYSTEM
-// ================================
+// =====================================
+// INTERACTIONS
+// =====================================
 
 client.on('interactionCreate', async interaction => {
   try {
+
+    // BUTTON: TICKET-AUSWAHL ÖFFNEN
+    if (
+      interaction.isButton() &&
+      interaction.customId === 'avenix_open_ticket'
+    ) {
+      const menu = new StringSelectMenuBuilder()
+        .setCustomId('avenix_ticket_select')
+        .setPlaceholder('Wähle deine Ticket-Kategorie')
+        .addOptions(
+          Object.entries(categories).map(([key, value]) => ({
+            label: value.label,
+            description: value.description,
+            emoji: value.emoji,
+            value: key
+          }))
+        );
+
+      const row = new ActionRowBuilder().addComponents(menu);
+
+      return interaction.reply({
+        content: '💜 **Welche Art von Ticket möchtest du erstellen?**',
+        components: [row],
+        ephemeral: true
+      });
+    }
 
     // TICKET ERSTELLEN
     if (
@@ -192,7 +240,7 @@ client.on('interactionCreate', async interaction => {
       const category = categories[selected];
 
       if (!category) {
-        return interaction.editReply('Diese Ticket-Kategorie ist ungültig.');
+        return interaction.editReply('Ungültige Ticket-Kategorie.');
       }
 
       const guild = interaction.guild;
@@ -205,7 +253,7 @@ client.on('interactionCreate', async interaction => {
 
       if (existingTicket) {
         return interaction.editReply(
-          `Du hast bereits ein Ticket dieser Kategorie: ${existingTicket}`
+          `Du hast bereits ein Ticket: ${existingTicket}`
         );
       }
 
@@ -218,7 +266,7 @@ client.on('interactionCreate', async interaction => {
         ticketCategory.type !== ChannelType.GuildCategory
       ) {
         return interaction.editReply(
-          'Die Ticket-Kategorie wurde nicht gefunden. Bitte informiere das Team.'
+          'Die Ticket-Kategorie wurde nicht gefunden.'
         );
       }
 
@@ -274,7 +322,9 @@ client.on('interactionCreate', async interaction => {
           `${category.message}\n\n` +
           'Unser Team wird sich schnellstmöglich bei dir melden.'
         )
-        .setFooter({ text: 'AVENIX Service • Ticket-System' })
+        .setFooter({
+          text: 'AVENIX Service • Ticket-System'
+        })
         .setTimestamp();
 
       const closeButton = new ButtonBuilder()
@@ -293,7 +343,7 @@ client.on('interactionCreate', async interaction => {
       });
 
       return interaction.editReply(
-        `Dein Ticket wurde erstellt: ${ticketChannel}`
+        `💜 Dein Ticket wurde erstellt: ${ticketChannel}`
       );
     }
 
@@ -314,8 +364,12 @@ client.on('interactionCreate', async interaction => {
 
       const [, creatorId] = channel.topic.split(':');
 
+      const member = await guild.members
+        .fetch(interaction.user.id)
+        .catch(() => null);
+
       const isCreator = interaction.user.id === creatorId;
-      const isTeam = interaction.member.roles.cache.has(CONFIG.teamRole);
+      const isTeam = member?.roles.cache.has(CONFIG.teamRole);
 
       if (!isCreator && !isTeam) {
         return interaction.reply({
@@ -337,7 +391,7 @@ client.on('interactionCreate', async interaction => {
         components: []
       });
 
-      // LOG ERSTELLEN
+      // TICKET-LOG
       const logChannel = await guild.channels
         .fetch(CONFIG.ticketLogChannel)
         .catch(() => null);
@@ -368,26 +422,24 @@ client.on('interactionCreate', async interaction => {
               name: '👤 Ersteller',
               value: creator
                 ? `${creator.tag} (${creator.id})`
-                : creatorId,
-              inline: false
+                : creatorId
             },
             {
               name: '🔒 Geschlossen von',
-              value: `${interaction.user.tag} (${interaction.user.id})`,
-              inline: false
+              value: `${interaction.user.tag} (${interaction.user.id})`
             },
             {
               name: '🕒 Erstellt',
-              value: `<t:${Math.floor(channel.createdTimestamp / 1000)}:F>`,
-              inline: false
+              value: `<t:${Math.floor(channel.createdTimestamp / 1000)}:F>`
             },
             {
               name: '🕒 Geschlossen',
-              value: `<t:${Math.floor(Date.now() / 1000)}:F>`,
-              inline: false
+              value: `<t:${Math.floor(Date.now() / 1000)}:F>`
             }
           )
-          .setFooter({ text: 'AVENIX Service • Ticket-Logs' })
+          .setFooter({
+            text: 'AVENIX Service • Ticket-Logs'
+          })
           .setTimestamp();
 
         await logChannel.send({
@@ -396,14 +448,19 @@ client.on('interactionCreate', async interaction => {
       }
 
       setTimeout(async () => {
-        await channel.delete('AVENIX Ticket geschlossen').catch(console.error);
+        await channel.delete('AVENIX Ticket geschlossen')
+          .catch(console.error);
       }, 5000);
     }
 
   } catch (error) {
-    console.error('Ticket-Fehler:', error);
+    console.error('Interaction-Fehler:', error);
 
-    if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
+    if (
+      interaction.isRepliable() &&
+      !interaction.replied &&
+      !interaction.deferred
+    ) {
       await interaction.reply({
         content: 'Es ist ein Fehler aufgetreten. Bitte informiere das Team.',
         ephemeral: true
@@ -412,12 +469,12 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-// ================================
-// BOT LOGIN
-// ================================
+// =====================================
+// LOGIN
+// =====================================
 
 if (!process.env.DISCORD_TOKEN) {
-  console.error('FEHLER: DISCORD_TOKEN fehlt in Railway!');
+  console.error('DISCORD_TOKEN fehlt in Railway!');
   process.exit(1);
 }
 
